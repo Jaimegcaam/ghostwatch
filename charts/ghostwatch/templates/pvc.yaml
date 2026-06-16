@@ -1,0 +1,16 @@
+{{- if .Values.persistence.uploads.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ghostwatch.fullname" . }}-uploads
+  labels:
+    {{- include "ghostwatch.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  {{- if .Values.persistence.uploads.storageClass }}
+  storageClassName: {{ .Values.persistence.uploads.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.uploads.size | quote }}
+{{- end }}

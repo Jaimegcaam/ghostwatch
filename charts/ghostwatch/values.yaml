@@ -1,0 +1,146 @@
+# Default values for the Ghostwatch Helm chart.
+# Copy and override the fields you care about: `helm install ... -f my-values.yaml`.
+
+# -- Number of app replicas. Keep at 1 unless you run an external scheduler
+# (cron.enabled=true) and disable the in-process scheduler (app.enableBuiltinScheduler=false).
+replicaCount: 1
+
+image:
+  repository: ghcr.io/ghostwatch/ghostwatch
+  tag: ""          # defaults to .Chart.appVersion when empty
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# ----------------------------------------------------------------------------
+# Application configuration (non-secret). Surfaced as a ConfigMap.
+# ----------------------------------------------------------------------------
+app:
+  # Public URL of the dashboard. MUST match what users type in the browser.
+  nextauthUrl: "https://ghostwatch.example.com"
+  # Hostname treated as the dashboard (defaults to the host part of nextauthUrl).
+  host: "ghostwatch.example.com"
+  # CNAME target shown in the status-page custom-domain instructions.
+  # Leave empty to fall back to `host`.
+  statusCnameTarget: ""
+  # Invitation-only: first user becomes owner; others join via team invite.
+  selfHosted: true
+  ownerEmail: ""
+  # Run due checks from the app process (no external CronJob needed).
+  enableBuiltinScheduler: true
+  cronIntervalMs: 60000
+  # Set true on regional workers (hub stays false). Disables scheduler/UI duties.
+  probeWorker: false
+  # Region id stored on check results (single-server / worker installs).
+  probeRegion: "local"
+  # Dashboard label when running a single in-process probe (optional).
+  # Ignored when monitoringRegions or probeEndpoints define labels.
+  probeRegionLabel: ""
+  # Optional UI override: comma-separated id|Label pairs.
+  # Example: "us-east-1|North Virginia,eu-south-2|Spain"
+  monitoringRegions: ""
+  # Region preselected when creating monitors (must match an id above).
+  defaultRegion: ""
+  # Hub only — remote workers. Format per entry:
+  #   regionId|https://probe-host
+  #   regionId|https://probe-host|Label shown in dashboard
+  # Example: "us-east-1|https://probe-va.corp.com|North Virginia,eu-south-2|https://probe-es.corp.com|Spain"
+  probeEndpoints: ""
+  fromEmail: "Ghostwatch <onboarding@resend.dev>"
+
+# ----------------------------------------------------------------------------
+# Secrets. Either provide values here (templated into a Secret) OR point
+# `existingSecret` at a Secret you created yourself.
+# A pre-created secret must contain: AUTH_SECRET, CRON_SECRET, DATABASE_URL,
+# and (optionally) RESEND_API_KEY, GOOGLE_CLIENT_ID/SECRET, GITHUB_ID/SECRET.
+# ----------------------------------------------------------------------------
+existingSecret: ""
+secrets:
+  # REQUIRED. Generate with: openssl rand -base64 32
+  authSecret: ""
+  cronSecret: ""
+  resendApiKey: ""
+  google:
+    clientId: ""
+    clientSecret: ""
+  github:
+    id: ""
+    secret: ""
+
+# ----------------------------------------------------------------------------
+# Bundled PostgreSQL (single-replica StatefulSet). For production prefer a
+# managed database: set postgres.enabled=false and provide externalDatabase.url.
+# ----------------------------------------------------------------------------
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  user: ghostwatch
+  database: ghostwatch
+  # REQUIRED when enabled. Generate with: openssl rand -base64 24
+  password: ""
+  storage: 10Gi
+  storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+externalDatabase:
+  # Full connection string, used only when postgres.enabled=false.
+  # e.g. postgresql://user:pass@host:5432/ghostwatch?schema=public
+  url: ""
+
+# Persistent volume for uploaded logos/assets.
+persistence:
+  uploads:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+# ----------------------------------------------------------------------------
+# Ingress. Enable to expose the dashboard and status pages over HTTPS.
+# ----------------------------------------------------------------------------
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  # TLS via cert-manager. Set issuer to your ClusterIssuer name to auto-issue.
+  tls:
+    enabled: true
+    clusterIssuer: ""
+  # Extra hostnames for custom status-page domains. Each becomes its own
+  # ingress rule (and TLS host) routed to the app — point a CNAME at the
+  # ingress and add the domain in the dashboard.
+  statusDomains: []
+  # - status.product-a.com
+  # - status.product-b.com
+
+# ----------------------------------------------------------------------------
+# External scheduler as a Kubernetes CronJob (alternative to the in-process
+# scheduler). If you enable this, set app.enableBuiltinScheduler=false.
+# ----------------------------------------------------------------------------
+cron:
+  enabled: false
+  schedule: "* * * * *"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

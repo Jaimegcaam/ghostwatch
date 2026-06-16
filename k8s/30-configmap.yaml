@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ghostwatch-config
+  namespace: ghostwatch
+data:
+  # Change this to the public URL of your dashboard.
+  NEXTAUTH_URL: "https://ghostwatch.example.com"
+  AUTH_TRUST_HOST: "true"
+  APP_HOST: "ghostwatch.example.com"
+  # CNAME target shown in Status Pages → custom domain instructions.
+  STATUS_CNAME_TARGET: "ghostwatch.example.com"
+  CRON_BASE_URL: "http://127.0.0.1:3000"
+
+  # Invitation-only access: first user becomes owner; others join via team invite.
+  SELF_HOSTED: "true"
+  # Optional — pin the owner email (otherwise the first sign-up wins).
+  OWNER_EMAIL: ""
+
+  # Checks execute in-process; built-in scheduler (disable k8s CronJob if true).
+  ENABLE_BUILTIN_SCHEDULER: "true"
+  CRON_INTERVAL_MS: "60000"
+  PROBE_REGION: "local"
+  # Optional label for a single in-process probe (shown in the dashboard):
+  # PROBE_REGION_LABEL: "Frankfurt office"
+  #
+  # Multi-region hub — labels as third field in PROBE_ENDPOINTS (recommended):
+  # PROBE_ENDPOINTS: "us-east-1|https://probe-va.corp.com|North Virginia,eu-south-2|https://probe-madrid.corp.com|Spain"
+  # DEFAULT_REGION: "us-east-1"
+  #
+  # Or set labels explicitly (overrides PROBE_ENDPOINTS labels when both are set):
+  # MONITORING_REGIONS: "us-east-1|North Virginia,eu-south-2|Spain"
+  # PROBE_ENDPOINTS: "us-east-1|https://probe-va.corp.com,eu-south-2|https://probe-madrid.corp.com"
+
+  FROM_EMAIL: "Ghostwatch <onboarding@resend.dev>"

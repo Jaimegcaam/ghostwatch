@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens — light */
+:root {
+  --gw-bg: #f4f6fa;
+  --gw-surface: #ffffff;
+  --gw-surface-2: #eef1f6;
+  --gw-surface-hover: #f8fafc;
+  --gw-border: #e2e8f0;
+  --gw-fg: #0f172a;
+  --gw-fg-muted: #475569;
+  --gw-fg-subtle: #94a3b8;
+}
+
+/* Design tokens — dark (softer than pure black) */
+html.dark {
+  --gw-bg: #181c27;
+  --gw-surface: #222836;
+  --gw-surface-2: #2a3142;
+  --gw-surface-hover: #2f3749;
+  --gw-border: #3d465c;
+  --gw-fg: #e8edf5;
+  --gw-fg-muted: #a8b3c7;
+  --gw-fg-subtle: #7b879e;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-gw-bg: var(--gw-bg);
+  --color-gw-surface: var(--gw-surface);
+  --color-gw-surface-2: var(--gw-surface-2);
+  --color-gw-surface-hover: var(--gw-surface-hover);
+  --color-gw-border: var(--gw-border);
+  --color-gw-fg: var(--gw-fg);
+  --color-gw-fg-muted: var(--gw-fg-muted);
+  --color-gw-fg-subtle: var(--gw-fg-subtle);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--gw-bg);
+    color: var(--gw-fg);
+  }
+}

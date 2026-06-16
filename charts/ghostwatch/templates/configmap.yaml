@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ghostwatch.fullname" . }}-config
+  labels:
+    {{- include "ghostwatch.labels" . | nindent 4 }}
+data:
+  NEXTAUTH_URL: {{ .Values.app.nextauthUrl | quote }}
+  AUTH_TRUST_HOST: "true"
+  APP_HOST: {{ .Values.app.host | quote }}
+  STATUS_CNAME_TARGET: {{ (default .Values.app.host .Values.app.statusCnameTarget) | quote }}
+  CRON_BASE_URL: "http://127.0.0.1:3000"
+  SELF_HOSTED: {{ .Values.app.selfHosted | quote }}
+  OWNER_EMAIL: {{ .Values.app.ownerEmail | quote }}
+  ENABLE_BUILTIN_SCHEDULER: {{ .Values.app.enableBuiltinScheduler | quote }}
+  CRON_INTERVAL_MS: {{ .Values.app.cronIntervalMs | quote }}
+  PROBE_WORKER: {{ .Values.app.probeWorker | quote }}
+  PROBE_REGION: {{ .Values.app.probeRegion | quote }}
+  {{- if .Values.app.probeRegionLabel }}
+  PROBE_REGION_LABEL: {{ .Values.app.probeRegionLabel | quote }}
+  {{- end }}
+  {{- if .Values.app.monitoringRegions }}
+  MONITORING_REGIONS: {{ .Values.app.monitoringRegions | quote }}
+  {{- end }}
+  {{- if .Values.app.defaultRegion }}
+  DEFAULT_REGION: {{ .Values.app.defaultRegion | quote }}
+  {{- end }}
+  {{- if .Values.app.probeEndpoints }}
+  PROBE_ENDPOINTS: {{ .Values.app.probeEndpoints | quote }}
+  {{- end }}
+  FROM_EMAIL: {{ .Values.app.fromEmail | quote }}

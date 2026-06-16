@@ -1,0 +1,50 @@
+# Regional worker — install one Helm release per geography
+# Same chart as the hub; different values file per region.
+#
+# Example (Spain worker):
+#   helm install ghostwatch-worker-es ./charts/ghostwatch \
+#     -n ghostwatch-workers \
+#     --create-namespace \
+#     -f charts/ghostwatch/values-examples/worker.yaml \
+#     --set app.probeRegion=eu-south-2 \
+#     --set app.nextauthUrl=https://probe-es.example.com \
+#     --set app.host=probe-es.example.com \
+#     --set externalDatabase.url="postgresql://USER:PASS@HUB-DB-HOST:5432/ghostwatch?schema=public" \
+#     --set secrets.authSecret="$AUTH_SECRET" \
+#     --set secrets.cronSecret="$CRON_SECRET"
+#
+# The id in app.probeRegion MUST match the id in the hub's app.probeEndpoints.
+
+replicaCount: 1
+
+app:
+  probeWorker: true
+  enableBuiltinScheduler: false
+  probeRegion: "eu-south-2"   # change per worker
+  nextauthUrl: "https://probe-es.example.com"
+  host: "probe-es.example.com"
+  selfHosted: true
+  # Workers do not list other probes
+  probeEndpoints: ""
+  defaultRegion: ""
+  monitoringRegions: ""
+
+postgres:
+  enabled: false
+
+externalDatabase:
+  url: ""   # same PostgreSQL as the hub (required)
+
+persistence:
+  uploads:
+    enabled: false
+
+ingress:
+  enabled: true   # hub must reach this URL over HTTPS
+
+cron:
+  enabled: false
+
+secrets:
+  authSecret: ""
+  cronSecret: ""   # MUST match the hub

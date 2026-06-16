@@ -1,0 +1,43 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "ghostwatch.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+{{- $hosts := prepend .Values.ingress.statusDomains .Values.app.host -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "ghostwatch.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if and .Values.ingress.tls.enabled .Values.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuer | quote }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        {{- range $hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ $fullName }}-tls
+  {{- end }}
+  rules:
+    {{- range $hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+    {{- end }}
+{{- end }}

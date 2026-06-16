@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest an idea for Ghostwatch
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! Please provide as much detail as possible.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: Describe the problem or use case
+      placeholder: e.g., "I'm always frustrated when..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: Any alternative solutions or workarounds you've considered
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any other context or examples

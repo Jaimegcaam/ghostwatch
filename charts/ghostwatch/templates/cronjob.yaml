@@ -1,0 +1,35 @@
+{{- if .Values.cron.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ghostwatch.fullname" . }}-cron
+  labels:
+    {{- include "ghostwatch.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cron
+spec:
+  schedule: {{ .Values.cron.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: trigger
+              image: curlimages/curl:8.7.1
+              command:
+                - /bin/sh
+                - -c
+                - >-
+                  curl -fsS -X POST
+                  -H "Authorization: Bearer $CRON_SECRET"
+                  http://{{ include "ghostwatch.fullname" . }}:{{ .Values.service.port }}/api/cron/execute
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "ghostwatch.secretName" . }}
+                      key: CRON_SECRET
+{{- end }}

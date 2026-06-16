@@ -1,0 +1,90 @@
+# Ghostwatch — single-command self-hosted stack.
+#
+# Quick start: docs/GETTING-STARTED.md
+#   npm run docker:init
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ghostwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ghostwatch}
+      POSTGRES_DB: ${POSTGRES_DB:-ghostwatch}
+    volumes:
+      - ghostwatch-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ghostwatch} -d ${POSTGRES_DB:-ghostwatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghostwatch:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # --- Required ---------------------------------------------------------
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ghostwatch}:${POSTGRES_PASSWORD:-ghostwatch}@postgres:5432/${POSTGRES_DB:-ghostwatch}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env (openssl rand -base64 32)}
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      # Scheduler calls the app inside this container (not the browser URL).
+      CRON_BASE_URL: http://127.0.0.1:3000
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env (openssl rand -base64 32)}
+
+      # --- Access control (invitation-only, always enforced) ---------------
+      # First user becomes the owner; everyone else joins via team invitation.
+      SELF_HOSTED: "true"
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      APP_HOST: ${APP_HOST:-localhost}
+      STATUS_CNAME_TARGET: ${STATUS_CNAME_TARGET:-}
+      # Checks run inside the app process; scheduler runs in-process (no cron container needed).
+      ENABLE_BUILTIN_SCHEDULER: "true"
+      CRON_INTERVAL_MS: ${CRON_INTERVAL_MS:-60000}
+      PROBE_REGION: ${PROBE_REGION:-local}
+      PROBE_REGION_LABEL: ${PROBE_REGION_LABEL:-}
+      MONITORING_REGIONS: ${MONITORING_REGIONS:-}
+      DEFAULT_REGION: ${DEFAULT_REGION:-}
+      PROBE_ENDPOINTS: ${PROBE_ENDPOINTS:-}
+      PROBE_WORKER: ${PROBE_WORKER:-false}
+
+      # --- Optional --------------------------------------------------------
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      FROM_EMAIL: ${FROM_EMAIL:-Ghostwatch <onboarding@resend.dev>}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_ID: ${GITHUB_ID:-}
+      GITHUB_SECRET: ${GITHUB_SECRET:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ghostwatch-uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Optional external cron — only needed if ENABLE_BUILTIN_SCHEDULER=false on `app`.
+  # cron:
+  #   image: ghostwatch:latest
+  #   restart: unless-stopped
+  #   depends_on:
+  #     app:
+  #       condition: service_healthy
+  #   environment:
+  #     NEXTAUTH_URL: http://app:3000
+  #     CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+  #   entrypoint: ["/sbin/tini", "--"]
+  #   command: ["node", "scripts/local-cron.mjs"]
+
+volumes:
+  ghostwatch-pgdata:
+  ghostwatch-uploads:

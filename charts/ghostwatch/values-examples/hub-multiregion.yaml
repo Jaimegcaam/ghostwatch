@@ -1,0 +1,35 @@
+# Hub — multi-region (install once in the main cluster)
+# helm install ghostwatch-hub ./charts/ghostwatch -n ghostwatch -f charts/ghostwatch/values-examples/hub-multiregion.yaml
+
+replicaCount: 1
+
+app:
+  nextauthUrl: "https://monitor.example.com"
+  host: "monitor.example.com"
+  selfHosted: true
+  ownerEmail: ""
+  probeWorker: false
+  enableBuiltinScheduler: true
+  defaultRegion: "us-east-1"
+  # Third field = label shown in the dashboard
+  probeEndpoints: >-
+    us-east-1|https://probe-va.example.com|North Virginia,
+    eu-south-2|https://probe-es.example.com|Spain
+
+postgres:
+  enabled: true
+  password: ""   # set via --set postgres.password=...
+
+ingress:
+  enabled: true
+
+cron:
+  enabled: false
+
+persistence:
+  uploads:
+    enabled: true
+
+secrets:
+  authSecret: ""   # --set secrets.authSecret=...
+  cronSecret: ""   # --set secrets.cronSecret=... (shared with all workers)

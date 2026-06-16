@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String           @id @default(cuid())
+  name            String?
+  email           String           @unique
+  emailVerified   DateTime?
+  image           String?
+  hashedPassword  String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  accounts        Account[]
+  teamMemberships TeamMember[]
+  invitationsSent TeamInvitation[] @relation("InvitedBy")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+}
+
+model Team {
+  id             String           @id @default(cuid())
+  name           String
+  slug           String           @unique
+  imageUrl       String?
+  ssoEnabled     Boolean          @default(false)
+  ssoProvider    String?
+  ssoClientId    String?
+  ssoClientSecret String?
+  ssoIssuer      String?
+  ssoMetadataUrl String?
+  ssoDomain      String?
+  members        TeamMember[]
+  projects       Project[]
+  invitations    TeamInvitation[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TeamRole @default(VIEWER)
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model TeamInvitation {
+  id          String    @id @default(cuid())
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  email       String
+  role        TeamRole  @default(VIEWER)
+  token       String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  invitedById String
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([teamId])
+  @@index([email])
+}
+
+model Project {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  teamId        String
+  team          Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  checks        Check[]
+  alertChannels AlertChannel[]
+  statusPages   StatusPage[]
+  maintenances  Maintenance[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([teamId])
+}
+
+model Check {
+  id                  String            @id @default(cuid())
+  name                String
+  url                 String
+  method              String            @default("GET")
+  headers             Json?
+  body                String?
+  expectedStatus      Int               @default(200)
+  timeout             Int               @default(30000)
+  interval            Int               @default(60)
+  enabled             Boolean           @default(true)
+  isPublic            Boolean           @default(true)
+  regions             String[]          @default(["us-east-1"])
+  consecutiveFailures Int               @default(0)
+  projectId           String
+  project             Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  results             CheckResult[]
+  statusPages         StatusPageCheck[]
+  incidents           Incident[]
+  alertRules          AlertRule[]
+  maintenances        MaintenanceCheck[]
+  baselineAvg         Float?
+  baselineStd         Float?
+  lastCheckedAt       DateTime?
+  lastAlertedAt       DateTime?
+  alertCooldownUntil  DateTime?
+  flapCount           Int               @default(0)
+  folder              String?
+  sortOrder           Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([projectId])
+  @@index([projectId, folder])
+  @@index([enabled])
+}
+
+model CheckResult {
+  id           String   @id @default(cuid())
+  checkId      String
+  check        Check    @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  status       Int?
+  responseTime Int?
+  success      Boolean
+  error        String?
+  region       String   @default("us-east-1")
+  isAnomaly    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([checkId, createdAt])
+  @@index([checkId, success])
+}
+
+model AlertChannel {
+  id         String      @id @default(cuid())
+  type       ChannelType
+  name       String
+  config     Json
+  enabled    Boolean     @default(true)
+  projectId  String
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  alerts     Alert[]
+  alertRules AlertRule[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([projectId])
+}
+
+model AlertRule {
+  id                  String       @id @default(cuid())
+  checkId             String
+  check               Check        @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  alertChannelId      String
+  alertChannel        AlertChannel @relation(fields: [alertChannelId], references: [id], onDelete: Cascade)
+  consecutiveFailures Int          @default(5)
+  notifyOnRecovery    Boolean      @default(true)
+  enabled             Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([checkId, alertChannelId])
+}
+
+model Alert {
+  id             String       @id @default(cuid())
+  alertChannelId String
+  alertChannel   AlertChannel @relation(fields: [alertChannelId], references: [id], onDelete: Cascade)
+  message        String
+  metadata       Json?
+  sentAt         DateTime     @default(now())
+}
+
+model Incident {
+  id         String         @id @default(cuid())
+  checkId    String
+  check      Check          @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  title      String
+  status     IncidentStatus @default(ONGOING)
+  startedAt  DateTime       @default(now())
+  resolvedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([checkId])
+  @@index([status])
+}
+
+model StatusPage {
+  id           String            @id @default(cuid())
+  projectId    String
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  slug         String            @unique
+  description  String?
+  isPublic      Boolean                 @default(true)
+  /// Public page appearance: "light" or "dark"
+  theme         String                  @default("light")
+  logoUrl       String?
+  checks        StatusPageCheck[]
+  customDomains StatusPageCustomDomain[]
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([projectId])
+}
+
+/// Custom hostnames (Route 53, etc.) mapped to a public status page. Multiple per page.
+model StatusPageCustomDomain {
+  id           String     @id @default(cuid())
+  statusPageId String
+  statusPage   StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+  domain       String     @unique
+  verified     Boolean    @default(false)
+  verifiedAt   DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([statusPageId])
+}
+
+model StatusPageCheck {
+  id           String     @id @default(cuid())
+  checkId      String
+  check        Check      @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  statusPageId String
+  statusPage   StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+
+  @@unique([checkId, statusPageId])
+}
+
+model Maintenance {
+  id             String              @id @default(cuid())
+  projectId      String
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  status         MaintenanceStatus   @default(SCHEDULED)
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  checks         MaintenanceCheck[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model MaintenanceCheck {
+  id            String      @id @default(cuid())
+  maintenanceId String
+  maintenance   Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  checkId       String
+  check         Check       @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@unique([maintenanceId, checkId])
+}
+
+enum TeamRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ChannelType {
+  SLACK
+  DISCORD
+  EMAIL
+  WEBHOOK
+}
+
+enum IncidentStatus {
+  ONGOING
+  RESOLVED
+}

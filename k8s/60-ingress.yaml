@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ghostwatch
+  namespace: ghostwatch
+  annotations:
+    # cert-manager — remove if you terminate TLS at your LB.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - ghostwatch.example.com
+        # Add each customer's custom domain here (or use a wildcard cert).
+        # - status.acme.com
+      secretName: ghostwatch-tls
+  rules:
+    # Main app domain — private dashboard
+    - host: ghostwatch.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ghostwatch-app
+                port:
+                  number: 80
+
+    # Custom status-page domains — the app middleware will map the Host
+    # header to the right status page and hide the dashboard.
+    # Add one rule per customer domain (or use a wildcard).
+    # - host: status.acme.com
+    #   http:
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    #         backend:
+    #           service:
+    #             name: ghostwatch-app
+    #             port:
+    #               number: 80

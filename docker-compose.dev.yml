@@ -1,0 +1,26 @@
+# Lightweight dev stack — runs only PostgreSQL so you can do `npm run dev`
+# locally without installing Postgres on your machine.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   npm run dev
+#
+# Database URL for your .env:
+#   DATABASE_URL=postgresql://ghostwatch:ghostwatch@localhost:5432/ghostwatch?schema=public
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ghostwatch-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ghostwatch
+      POSTGRES_PASSWORD: ghostwatch
+      POSTGRES_DB: ghostwatch
+    ports:
+      - "5432:5432"
+    volumes:
+      - ghostwatch-devdata:/var/lib/postgresql/data
+
+volumes:
+  ghostwatch-devdata:

@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ghostwatch-cron
+  namespace: ghostwatch
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: tick
+              image: curlimages/curl:8.10.1
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: ghostwatch-secrets
+                      key: CRON_SECRET
+              command:
+                - /bin/sh
+                - -c
+                - >
+                  curl -fsS
+                  -H "Authorization: Bearer $CRON_SECRET"
+                  http://ghostwatch-app/api/cron/execute
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi

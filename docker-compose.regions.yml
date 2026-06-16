@@ -1,0 +1,135 @@
+# =============================================================================
+#  Local multi-region test stack (free — all on one machine)
+#
+#  Simulates: hub + "Virginia" worker + "Spain" worker
+#
+#  Prerequisites: .env with AUTH_SECRET and CRON_SECRET (same as normal compose)
+#
+#  Start:
+#    npm run docker:regions:build    # only when code changed
+#    npm run docker:regions:up        # fast restart (no rebuild)
+#
+#  Avoid `up --build` on every change — it recompiles Next.js from scratch.
+#
+#  Dashboard: http://localhost:3000
+#  Workers (probe API only): http://localhost:3001 (us-east-1), :3002 (eu-south-2)
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ghostwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ghostwatch}
+      POSTGRES_DB: ${POSTGRES_DB:-ghostwatch}
+    volumes:
+      - ghostwatch-pgdata-regions:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ghostwatch} -d ${POSTGRES_DB:-ghostwatch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --- Central hub (dashboard + scheduler) -----------------------------------
+  hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghostwatch:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      probe-us:
+        condition: service_healthy
+      probe-es:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ghostwatch}:${POSTGRES_PASSWORD:-ghostwatch}@postgres:5432/${POSTGRES_DB:-ghostwatch}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      CRON_BASE_URL: http://127.0.0.1:3000
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+      SELF_HOSTED: "true"
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      APP_HOST: ${APP_HOST:-localhost}
+      ENABLE_BUILTIN_SCHEDULER: "true"
+      CRON_INTERVAL_MS: ${CRON_INTERVAL_MS:-60000}
+      PROBE_WORKER: "false"
+      # Labels are read from PROBE_ENDPOINTS (third field) or MONITORING_REGIONS.
+      PROBE_ENDPOINTS: "us-east-1|http://probe-us:3000|North Virginia,eu-south-2|http://probe-es:3000|Spain"
+      DEFAULT_REGION: "us-east-1"
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      FROM_EMAIL: ${FROM_EMAIL:-Ghostwatch <onboarding@resend.dev>}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_ID: ${GITHUB_ID:-}
+      GITHUB_SECRET: ${GITHUB_SECRET:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ghostwatch-uploads-regions:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  # --- Regional worker: "North Virginia" -------------------------------------
+  probe-us:
+    image: ghostwatch:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ghostwatch}:${POSTGRES_PASSWORD:-ghostwatch}@postgres:5432/${POSTGRES_DB:-ghostwatch}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: http://localhost:3001
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+      SELF_HOSTED: "true"
+      PROBE_WORKER: "true"
+      PROBE_REGION: "us-east-1"
+      ENABLE_BUILTIN_SCHEDULER: "false"
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # --- Regional worker: "Spain" ----------------------------------------------
+  probe-es:
+    image: ghostwatch:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ghostwatch}:${POSTGRES_PASSWORD:-ghostwatch}@postgres:5432/${POSTGRES_DB:-ghostwatch}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: http://localhost:3002
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+      SELF_HOSTED: "true"
+      PROBE_WORKER: "true"
+      PROBE_REGION: "eu-south-2"
+      ENABLE_BUILTIN_SCHEDULER: "false"
+    ports:
+      - "3002:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  ghostwatch-pgdata-regions:
+  ghostwatch-uploads-regions:

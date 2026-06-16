@@ -1,0 +1,29 @@
+{{ if .Values.app.probeWorker -}}
+This release is a **regional probe worker** ({{ .Values.app.probeRegion }}).
+The hub calls POST /api/probe/{{ .Values.app.probeRegion }} on this host.
+Ensure {{ .Values.app.nextauthUrl }} is reachable from the hub.
+
+Check health:
+   curl -fsS {{ .Values.app.nextauthUrl }}/api/health
+{{- else -}}
+Ghostwatch has been deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+1. Check the rollout:
+   kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "ghostwatch.fullname" . }}
+
+{{ if .Values.ingress.enabled -}}
+2. Open the dashboard:
+   https://{{ .Values.app.host }}
+{{- else -}}
+2. No ingress is enabled. Port-forward to try it locally:
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "ghostwatch.fullname" . }} 3000:{{ .Values.service.port }}
+   open http://localhost:3000
+{{- end }}
+
+3. The first user to register becomes the instance owner. After that,
+   registration is closed and new users join via team invitations.
+{{- end }}
+
+{{ if not .Values.postgres.enabled -}}
+NOTE: Using external database (postgres.enabled=false).
+{{- end }}
