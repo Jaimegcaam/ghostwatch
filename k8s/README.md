@@ -1,14 +1,13 @@
 # Kubernetes manifests
 
-Plain YAML (no Helm). **Prefer [Helm](../docs/deploy/kubernetes-helm.md) if you can.**
+Plain YAML alternative to Helm. **Prefer [Helm](../docs/deploy/kubernetes-helm.md)** for easier upgrades and secret management.
 
-**Start here:** [docs/deploy/kubernetes-manifests.md](../docs/deploy/kubernetes-manifests.md)
+**Install guide:** [docs/deploy/kubernetes-manifests.md](../docs/deploy/kubernetes-manifests.md)
 
-| File | Purpose |
+| File | Edit for |
 | --- | --- |
-| `30-configmap.yaml` | URLs and flags — edit this |
-| `40-app.yaml` | App deployment |
-| `10-postgres.yaml` | Database (or use managed DB) |
-| `60-ingress.yaml` | HTTPS ingress |
+| `30-configmap.yaml` | `NEXTAUTH_URL`, `APP_HOST`, region settings |
+| `40-app.yaml` | Container image reference |
+| `60-ingress.yaml` | Your domain and TLS |
 
-Do not apply `20-secrets.yaml` in production.
+Do not apply `20-secrets.yaml` in production — create secrets with `kubectl create secret` instead.

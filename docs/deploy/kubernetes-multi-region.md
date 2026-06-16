@@ -1,10 +1,16 @@
 # Kubernetes — multi-region
 
-**Advanced.** Same Helm chart for hub and each worker.
+Run checks from several locations: one **hub** (dashboard + scheduler) and one **worker** release per region. All use the same Helm chart with different values.
 
-Example values: [`charts/ghostwatch/values-examples/`](../../charts/ghostwatch/values-examples/)
+Example files: [`charts/ghostwatch/values-examples/`](../../charts/ghostwatch/values-examples/)
+
+Try the layout locally first → [Docker multi-region](docker-multi-region.md)
+
+---
 
 ## Hub
+
+The hub owns the database (or points to a shared managed DB) and lists workers in `probeEndpoints`:
 
 ```bash
 helm install ghostwatch-hub ./charts/ghostwatch \
@@ -18,7 +24,11 @@ helm install ghostwatch-hub ./charts/ghostwatch \
   --set app.probeEndpoints="us-east-1|https://probe-va.example.com|North Virginia,eu-south-2|https://probe-es.example.com|Spain"
 ```
 
-## Each worker (repeat per region)
+---
+
+## Each worker
+
+Repeat for every region. Workers connect to the **hub's database** and only run probes:
 
 ```bash
 helm install ghostwatch-worker-es ./charts/ghostwatch \
@@ -32,12 +42,13 @@ helm install ghostwatch-worker-es ./charts/ghostwatch \
   --set secrets.cronSecret="$CRON_SECRET"
 ```
 
-| Rule | |
+| Rule | Why |
 | --- | --- |
-| Same chart | `./charts/ghostwatch` for hub **and** every worker |
-| `CRON_SECRET` | Must match the hub |
-| `app.probeRegion` | Must match an id in hub `probeEndpoints` |
+| Same `CRON_SECRET` on hub and workers | Workers reject probe requests otherwise |
+| `app.probeRegion` matches hub `probeEndpoints` id | Hub must know which worker handles which region |
+| Workers use hub `DATABASE_URL` | Check results are stored centrally |
+| `probeWorker: true` in worker values | Disables scheduler on workers |
 
-Try locally first → [Docker multi-region](docker-multi-region.md)
+Users only visit the hub URL. Worker URLs are internal probe endpoints.
 
 [← Deploy guides](README.md)

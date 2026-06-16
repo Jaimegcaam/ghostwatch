@@ -1,17 +1,17 @@
-# Deployment guides
+# Deploy guides
 
-**New here?** Start with **[Getting started](../GETTING-STARTED.md)** — it covers 95% of installs.
+Pick the guide that matches how you want to run Ghostwatch.
 
----
+**New install?** Start with **[Getting started](../GETTING-STARTED.md)** — Docker on one server covers most use cases.
 
-## Guides
+| Guide | Use when |
+| --- | --- |
+| [Getting started](../GETTING-STARTED.md) | First install with Docker |
+| [Local development](local-development.md) | Changing source code (`npm run dev`) |
+| [Docker single server](docker-single-server.md) | Production on one VPS or machine |
+| [Docker multi-region](docker-multi-region.md) | Hub + workers in different locations |
+| [Kubernetes Helm](kubernetes-helm.md) | Production on Kubernetes with Helm |
+| [Kubernetes YAML](kubernetes-manifests.md) | Kubernetes without Helm |
+| [Kubernetes multi-region](kubernetes-multi-region.md) | Hub on K8s + workers elsewhere |
 
-| Setup | When | Guide |
-| --- | --- | --- |
-| **Docker** | Default — one server | [docker-single-server.md](docker-single-server.md) |
-| **Local dev** | Contributing / UI work | [local-development.md](local-development.md) |
-| **Kubernetes (Helm)** | Production on K8s | [kubernetes-helm.md](kubernetes-helm.md) |
-| **Kubernetes (YAML)** | No Helm | [kubernetes-manifests.md](kubernetes-manifests.md) |
-| **Multi-region** | Checks from several countries | [docker](docker-multi-region.md) · [kubernetes](kubernetes-multi-region.md) |
-
-[Configuration reference](../CONFIGURATION.md) · [Main README](../../README.md)
+**Environment variables:** [Configuration reference](../CONFIGURATION.md)
