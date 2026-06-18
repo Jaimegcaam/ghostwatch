@@ -16,7 +16,7 @@
 
 ---
 
-## Quick Start (< 5 minutes)
+## Quick Start
 
 **Requirements:** [Docker](https://docs.docker.com/get-docker/)
 
@@ -39,23 +39,23 @@ More: [Getting started](docs/GETTING-STARTED.md) · [Configuration](docs/CONFIGU
 
 ## Screenshots
 
-<p align="center">
-  <img src="docs/assets/screenshot-dashboard.png" alt="Dashboard" width="780">
-</p>
-
-<p align="center">
-  <img src="docs/assets/screenshot-monitors.png" alt="Monitors" width="780">
-</p>
-
 <table>
-<tr>
-<td width="50%" align="center">
-<img src="docs/assets/screenshot-status-page-light.png" alt="Status page light" width="100%">
-</td>
-<td width="50%" align="center">
-<img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark" width="100%">
-</td>
-</tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshot-dashboard.png" alt="Dashboard" width="780">
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshot-status-page-light.png" alt="Status page light" width="100%">
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark" width="100%">
+    </td>
+  </tr>
 </table>
 
 ---
