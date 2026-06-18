@@ -80,8 +80,8 @@ export default async function ChecksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-gw-fg">
             Monitors
           </h1>
@@ -91,17 +91,18 @@ export default async function ChecksPage() {
           </p>
         </div>
         {userCanEdit && (
-          <div className="flex items-center gap-3">
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
             <Link
               href="/checks/discover"
-              className="inline-flex items-center gap-2 rounded-xl border border-gw-border bg-gw-surface px-4 py-2.5 text-sm font-medium text-gw-fg-muted shadow-sm transition-all hover:bg-gw-surface-hover"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gw-border bg-gw-surface px-4 py-2.5 text-sm font-medium text-gw-fg-muted shadow-sm transition-all hover:bg-gw-surface-hover sm:w-auto"
             >
               <Search className="h-4 w-4 text-gw-fg-subtle" />
-              Import OpenAPI
+              <span className="sm:hidden">Import</span>
+              <span className="hidden sm:inline">Import OpenAPI</span>
             </Link>
             <Link
               href="/checks/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500 sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               New Monitor

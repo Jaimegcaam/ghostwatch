@@ -44,8 +44,8 @@ export default function TeamsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-gw-fg">Teams</h1>
           <p className="mt-1 text-sm text-gw-fg-muted">
             Manage your teams and collaborate with others.
@@ -53,7 +53,7 @@ export default function TeamsPage() {
         </div>
         <Link
           href="/teams/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500 sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           New Team
@@ -88,8 +88,9 @@ export default function TeamsPage() {
           {teams.map((team) => (
             <div
               key={team.id}
-              className="flex items-center gap-4 rounded-2xl border border-gw-border bg-gw-surface px-5 py-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
+              className="flex flex-col gap-3 rounded-2xl border border-gw-border bg-gw-surface px-4 py-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md sm:flex-row sm:items-center sm:gap-4 sm:px-5"
             >
+              <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
               {team.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={resolveUploadUrl(team.imageUrl) ?? ""} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
@@ -99,7 +100,7 @@ export default function TeamsPage() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="text-sm font-semibold text-gw-fg">{team.name}</span>
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${roleBadgeStyles[team.role] ?? roleBadgeStyles.VIEWER}`}>
                     {team.role}
@@ -109,7 +110,8 @@ export default function TeamsPage() {
                   {team.memberCount} member{team.memberCount !== 1 ? "s" : ""} · {team.projectCount} project{team.projectCount !== 1 ? "s" : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              </div>
+              <div className="flex items-center gap-2 sm:shrink-0">
                 {team.role === "ADMIN" && (
                   <Link
                     href={`/teams/${team.id}/settings`}

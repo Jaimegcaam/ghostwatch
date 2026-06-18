@@ -170,7 +170,7 @@ export function CustomDomainSetup({
   );
 
   return (
-    <div className="space-y-4 rounded-xl border border-gw-border bg-gw-surface-2 p-4">
+    <div className="space-y-4 rounded-xl border border-gw-border bg-gw-surface-2 p-3 sm:p-4">
       <div>
         <p className="text-sm font-medium text-gw-fg">Public URLs</p>
         <p className="mt-1 text-xs text-gw-fg-muted">
@@ -179,7 +179,7 @@ export function CustomDomainSetup({
             href={defaultPublicUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-indigo-600 hover:underline dark:text-indigo-400"
+            className="break-all font-mono text-indigo-600 hover:underline dark:text-indigo-400"
           >
             {defaultPublicUrl}
           </a>
@@ -204,7 +204,7 @@ export function CustomDomainSetup({
             <label className="mb-1.5 block text-sm font-medium text-gw-fg-muted">
               Custom domains
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
                 value={newDomain}
@@ -225,7 +225,7 @@ export function CustomDomainSetup({
                 type="button"
                 onClick={addDomain}
                 disabled={!newDomain.trim()}
-                className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-gw-border bg-gw-surface px-3 py-2 text-sm font-medium text-gw-fg transition-colors hover:bg-gw-surface-hover disabled:opacity-50"
+                className="inline-flex w-full shrink-0 items-center justify-center gap-1 rounded-xl border border-gw-border bg-gw-surface px-3 py-2 text-sm font-medium text-gw-fg transition-colors hover:bg-gw-surface-hover disabled:opacity-50 sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
                 Add
@@ -341,12 +341,14 @@ export function CustomDomainSetup({
               {setup?.instructions.reverseProxy ??
                 "Configure your proxy / Ingress so every listed hostname terminates HTTPS and forwards to Ghostwatch."}
             </p>
-            <div className="flex items-center gap-2 text-xs text-gw-fg-muted">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
               <span>CNAME target for all pages:</span>
-              <code className="rounded bg-gw-surface-2 px-1.5 py-0.5 font-mono">
+              <div className="flex min-w-0 items-center gap-2">
+              <code className="min-w-0 break-all rounded bg-gw-surface-2 px-1.5 py-0.5 font-mono">
                 {cnameTarget}
               </code>
               <CopyButton text={cnameTarget} />
+              </div>
             </div>
           </div>
         </>

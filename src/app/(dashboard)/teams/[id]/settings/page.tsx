@@ -103,7 +103,7 @@ export default function TeamSettingsPage({ params }: { params: Promise<{ id: str
         <p className="mt-1 text-sm text-gw-fg-muted">Manage your team configuration.</p>
       </div>
 
-      <form onSubmit={handleSave} className="rounded-2xl border border-gw-border bg-gw-surface p-6 shadow-sm space-y-4">
+      <form onSubmit={handleSave} className="rounded-2xl border border-gw-border bg-gw-surface p-4 shadow-sm space-y-4 sm:p-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gw-fg-muted mb-1">Team Name</label>
           <input
@@ -132,14 +132,14 @@ export default function TeamSettingsPage({ params }: { params: Promise<{ id: str
             Team Image <span className="font-normal text-gw-fg-subtle">(optional)</span>
           </label>
           {imageUrl ? (
-            <div className="flex items-center gap-3 rounded-xl border border-gw-border bg-gw-surface-2 px-4 py-3">
+            <div className="flex flex-col gap-3 rounded-xl border border-gw-border bg-gw-surface-2 px-4 py-3 sm:flex-row sm:items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={resolveUploadUrl(imageUrl) ?? ""}
                 alt="Team"
-                className="h-10 w-10 rounded-lg object-cover"
+                className="h-10 w-10 shrink-0 rounded-lg object-cover"
               />
-              <span className="flex-1 truncate text-xs text-gw-fg-muted">{imageUrl}</span>
+              <span className="min-w-0 flex-1 break-all text-xs text-gw-fg-muted">{imageUrl}</span>
               <button
                 type="button"
                 onClick={() => setImageUrl("")}
@@ -224,11 +224,11 @@ export default function TeamSettingsPage({ params }: { params: Promise<{ id: str
             Delete Team
           </button>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50 ${dangerFilledButtonClass}`}
+              className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50 sm:w-auto ${dangerFilledButtonClass}`}
             >
               {deleting ? "Deleting..." : "Yes, delete this team"}
             </button>

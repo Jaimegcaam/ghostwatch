@@ -310,8 +310,8 @@ export default function StatusPagesManager() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gw-fg">Status Pages</h1>
           <p className="mt-1 text-sm text-gw-fg-muted">
             Create and manage public status pages for your monitors
@@ -321,7 +321,7 @@ export default function StatusPagesManager() {
           <button
             type="button"
             onClick={openCreateForm}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500 sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Create Status Page
@@ -359,12 +359,12 @@ export default function StatusPagesManager() {
           {statusPages.map((page) => (
             <div
               key={page.id}
-              className="rounded-2xl border border-gw-border bg-gw-surface p-5 shadow-sm"
+              className="rounded-2xl border border-gw-border bg-gw-surface p-4 shadow-sm sm:p-5"
             >
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate text-base font-semibold text-gw-fg">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <h3 className="text-base font-semibold text-gw-fg">
                       {page.title}
                     </h3>
                     <span
@@ -400,10 +400,10 @@ export default function StatusPagesManager() {
                     ).map((url) => (
                       <li
                         key={url}
-                        className="flex items-center gap-2 text-sm text-gw-fg-muted"
+                        className="flex items-start gap-2 text-sm text-gw-fg-muted"
                       >
-                        <Link2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate font-mono text-xs text-gw-fg">
+                        <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span className="min-w-0 flex-1 break-all font-mono text-xs text-gw-fg">
                           {url.replace(/^https:\/\//, "")}
                         </span>
                         <a
@@ -418,9 +418,9 @@ export default function StatusPagesManager() {
                     ))}
                   </ul>
                 ) : (
-                  <div className="flex items-center gap-2 text-sm text-gw-fg-muted">
-                    <Link2 className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate font-mono text-xs">
+                  <div className="flex items-start gap-2 text-sm text-gw-fg-muted">
+                    <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 flex-1 break-all font-mono text-xs">
                       {page.urls?.defaultUrl ?? `${appOrigin}/s/${page.slug}`}
                     </span>
                     <a
@@ -435,7 +435,7 @@ export default function StatusPagesManager() {
                 )}
                 {(page.urls?.customUrls?.length ?? page.domains?.length ?? 0) >
                   0 && (
-                  <p className="text-[11px] text-gw-fg-subtle">
+                  <p className="break-all text-[11px] text-gw-fg-subtle">
                     Also at{" "}
                     {page.urls?.defaultUrl ?? `${appOrigin}/s/${page.slug}`}
                   </p>
@@ -478,9 +478,9 @@ export default function StatusPagesManager() {
 
       {/* Create / Edit modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 pt-[10vh]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-0 sm:items-start sm:p-4 sm:pt-[10vh]">
           <div
-            className="w-full max-w-lg rounded-2xl border border-gw-border bg-gw-surface p-6 shadow-xl"
+            className="max-h-[100dvh] w-full overflow-y-auto rounded-t-2xl border border-gw-border bg-gw-surface p-4 shadow-xl sm:max-h-none sm:max-w-lg sm:rounded-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-6 flex items-center justify-between">
@@ -595,7 +595,7 @@ export default function StatusPagesManager() {
                 </label>
 
                 {form.logoUrl ? (
-                  <div className="flex items-center gap-3 rounded-xl border border-gw-border bg-gw-surface-2 px-4 py-3">
+                  <div className="flex flex-col gap-3 rounded-xl border border-gw-border bg-gw-surface-2 px-4 py-3 sm:flex-row sm:items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={
@@ -603,9 +603,9 @@ export default function StatusPagesManager() {
                         ""
                       }
                       alt="Logo preview"
-                      className="h-24 w-auto max-w-[320px] object-contain object-left"
+                      className="h-16 w-auto max-w-full object-contain object-left sm:h-24 sm:max-w-[320px]"
                     />
-                    <span className="flex-1 truncate text-xs text-gw-fg-muted">
+                    <span className="min-w-0 flex-1 break-all text-xs text-gw-fg-muted">
                       {form.logoUrl}
                     </span>
                     <button
@@ -825,11 +825,11 @@ export default function StatusPagesManager() {
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="rounded-xl border border-gw-border bg-gw-surface px-4 py-2.5 text-sm font-medium text-gw-fg-muted transition-all hover:bg-gw-surface-hover"
+                  className="w-full rounded-xl border border-gw-border bg-gw-surface px-4 py-2.5 text-sm font-medium text-gw-fg-muted transition-all hover:bg-gw-surface-hover sm:w-auto"
                 >
                   Cancel
                 </button>
@@ -837,7 +837,7 @@ export default function StatusPagesManager() {
                   type="button"
                   disabled={saving || !form.title.trim() || !form.slug.trim()}
                   onClick={handleSave}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {editingId ? "Save Changes" : "Create Status Page"}
