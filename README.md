@@ -5,8 +5,19 @@
 <h1 align="center">Ghostwatch</h1>
 
 <p align="center">
-  <strong>Self-hosted uptime monitoring and public status pages.</strong><br>
-  Monitor your APIs, alert your team, share status with your users — on your own infrastructure.
+  <strong>Self-hosted uptime monitoring and public status pages.</strong>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a>
+  ·
+  <a href="#why-ghostwatch">Why</a>
+  ·
+  <a href="#screenshots">Screenshots</a>
+  ·
+  <a href="#deploy">Deploy</a>
+  ·
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 <p align="center">
@@ -16,18 +27,32 @@
 
 ---
 
-## Features
+## What is Ghostwatch?
 
-- HTTP checks with folders and multi-region probes
-- Alerts — Slack, Discord, webhooks, email
-- Public status pages on `/s/<slug>` or your own domain
-- Invite-only teams · Docker, Kubernetes (Helm), multi-region workers
+**Ghostwatch** monitors your HTTP endpoints, alerts your team when something breaks, and publishes **public status pages** — all on infrastructure you control.
+
+Built with **Next.js**, **PostgreSQL**, and **Docker**. MIT licensed.
+
+**Who is it for?** Teams that self-host APIs or services and want a private dashboard plus a customer-facing status page at `status.yourcompany.com` — without sending monitor URLs to a third-party SaaS.
+
+---
+
+## Why Ghostwatch?
+
+| | Ghostwatch | Typical SaaS (UptimeRobot, Statuspage, …) |
+| --- | --- | --- |
+| **Your data** | Your database, your server | Vendor-hosted |
+| **Status pages** | Custom domains included | Often a paid add-on |
+| **Cost** | Free (MIT) — you pay for infra | Per monitor / per seat |
+| **Setup** | One Docker command | Sign up + configure |
+
+**Use Ghostwatch if you want:** uptime checks, Slack/Discord/email alerts, and shareable status pages — without vendor lock-in.
 
 ---
 
 ## Quick Start
 
-**Requirements:** [Docker](https://docs.docker.com/get-docker/)
+**Requirements:** [Docker](https://docs.docker.com/get-docker/) · takes **under 5 minutes**
 
 ```bash
 git clone https://github.com/jaimegcaam/ghostwatch.git
@@ -37,12 +62,12 @@ open http://localhost:3000
 ```
 
 1. **Register** — the first account becomes the owner  
-2. **Checks → New monitor** — add a URL to watch  
-3. Wait ~1 minute — checks run automatically  
+2. **Checks → New monitor** — paste a URL to watch  
+3. Wait ~1 minute — checks run automatically inside the container  
 
 No Node.js? `./scripts/docker-setup.sh && docker compose up -d`
 
-More: [Getting started](docs/GETTING-STARTED.md) · [Configuration](docs/CONFIGURATION.md)
+→ [Getting started guide](docs/GETTING-STARTED.md) · [Configuration](docs/CONFIGURATION.md)
 
 ---
 
@@ -51,21 +76,26 @@ More: [Getting started](docs/GETTING-STARTED.md) · [Configuration](docs/CONFIGU
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src="docs/assets/screenshot-dashboard.png" alt="Dashboard" width="780">
+      <img src="docs/assets/screenshot-dashboard.png" alt="Dashboard overview" width="100%">
+      <br><em>Dashboard — uptime, probes, alerts</em>
     </td>
     <td width="50%" align="center">
-      <img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark" width="100%">
+      <img src="docs/assets/screenshot-monitors.png" alt="Monitors list" width="100%">
+      <br><em>Monitors — folders, multi-region checks</em>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <img src="docs/assets/screenshot-status-page-light.png" alt="Status page light" width="100%">
+      <img src="docs/assets/screenshot-status-page-light.png" alt="Status page light theme" width="100%">
+      <br><em>Status page (light)</em>
     </td>
     <td width="50%" align="center">
-      <img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark" width="100%">
+      <img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark theme" width="100%">
+      <br><em>Status page (dark) — custom domain ready</em>
     </td>
   </tr>
 </table>
+
 
 ---
 
@@ -83,5 +113,23 @@ More: [Getting started](docs/GETTING-STARTED.md) · [Configuration](docs/CONFIGU
 
 Full index: [docs/deploy/README.md](docs/deploy/README.md)
 
+---
 
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · MIT License
+## Features
+
+- HTTP checks with folders and optional multi-region probes
+- Alerts — Slack, Discord, webhooks, email (Resend)
+- Public status pages on `/s/<slug>` or your own domain
+- Invite-only teams after the owner account exists
+
+---
+
+## Contributing
+
+Ghostwatch is open source and contributions are welcome — bug reports, docs, and pull requests.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) · Report security issues via [SECURITY.md](SECURITY.md) (not public issues)
+
+**Star the repo** if you find it useful — it helps other developers discover it.
+
+MIT License — see [LICENSE](LICENSE).
