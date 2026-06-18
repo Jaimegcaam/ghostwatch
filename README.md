@@ -1,53 +1,79 @@
-# Ghostwatch
+<p align="center">
+  <img src="docs/assets/logo.png" alt="Ghostwatch" width="88">
+</p>
 
-Self-hosted uptime monitoring with public status pages. You run the app and database;
-checks, alerts, and status pages stay under your control.
+<h1 align="center">Ghostwatch</h1>
 
-## Quick start (local)
+<p align="center">
+  <strong>Self-hosted uptime monitoring and public status pages.</strong><br>
+  Monitor your APIs, alert your team, share status with your users — on your own infrastructure.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4f46e5?style=flat-square" alt="MIT"></a>
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker">
+</p>
+
+---
+
+## Quick Start (< 5 minutes)
+
+**Requirements:** [Docker](https://docs.docker.com/get-docker/)
 
 ```bash
+git clone https://github.com/jaimegcaam/ghostwatch.git
+cd ghostwatch
 npm run docker:init
 open http://localhost:3000
 ```
 
-The setup script creates `.env` with secrets and starts Postgres + the app. Register —
-the first account becomes the **owner**. Then add a monitor under **Checks → New monitor**.
+1. **Register** — the first account becomes the owner  
+2. **Checks → New monitor** — add a URL to watch  
+3. Wait ~1 minute — checks run automatically  
 
-**Full walkthrough:** [Getting started](docs/GETTING-STARTED.md)
+No Node.js? `./scripts/docker-setup.sh && docker compose up -d`
 
-## What you need to configure
+More: [Getting started](docs/GETTING-STARTED.md) · [Configuration](docs/CONFIGURATION.md)
 
-| When | What | Why |
-| --- | --- | --- |
-| **Local try-out** | Nothing extra | Defaults work on `localhost:3000` |
-| **Production** | `NEXTAUTH_URL`, `APP_HOST` | Login and links must match your public URL |
-| **Lock owner** | `OWNER_EMAIL` (optional) | Ensures only you can create the first account |
-| **Email alerts** | `RESEND_API_KEY` (optional) | Without it, alerts stay in-app only |
-| **Custom status domain** | DNS CNAME + dashboard | Serve `status.yourcompany.com` instead of `/s/slug` |
-| **Multi-region checks** | `PROBE_ENDPOINTS` + workers | Run monitors from several locations |
+---
 
-Details: [Configuration](docs/CONFIGURATION.md)
+## Screenshots
 
-## Deploy guides
+<p align="center">
+  <img src="docs/assets/screenshot-dashboard.png" alt="Dashboard" width="780">
+</p>
 
-| Setup | Guide |
-| --- | --- |
-| Docker (recommended) | [Getting started](docs/GETTING-STARTED.md) |
-| Local dev (source code) | [Local development](docs/deploy/local-development.md) |
-| Kubernetes | [Helm](docs/deploy/kubernetes-helm.md) · [YAML](docs/deploy/kubernetes-manifests.md) |
-| Multi-region | [Docker](docs/deploy/docker-multi-region.md) · [K8s](docs/deploy/kubernetes-multi-region.md) |
+<p align="center">
+  <img src="docs/assets/screenshot-monitors.png" alt="Monitors" width="780">
+</p>
+
+<table>
+<tr>
+<td width="50%" align="center">
+<img src="docs/assets/screenshot-status-page-light.png" alt="Status page light" width="100%">
+</td>
+<td width="50%" align="center">
+<img src="docs/assets/screenshot-status-page-dark.png" alt="Status page dark" width="100%">
+</td>
+</tr>
+</table>
+
+---
+
+## Demo
+
+<p align="center">
+  <video src="docs/assets/demo.webm" autoplay loop muted playsinline width="720">
+  </video>
+</p>
+
+---
 
 ## Features
 
-- **Checks** — HTTP monitors in folders, with sustained-outage detection (a blip shows as *degraded*, not down)
-- **Alerts** — Slack, Discord, webhooks, and email (email needs Resend)
-- **Status pages** — public pages on `/s/<slug>` or your own domain
-- **Teams** — invite-only; no public sign-up after the owner exists
-- **Regions** — optional workers to probe from other countries
+- HTTP checks with folders and multi-region probes
+- Alerts — Slack, Discord, webhooks, email
+- Public status pages on `/s/<slug>` or your own domain
+- Invite-only teams · Docker, Kubernetes (Helm), multi-region workers
 
-## More
-
-- [Configuration reference](docs/CONFIGURATION.md)
-- [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
-
-MIT License
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · MIT License
