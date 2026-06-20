@@ -5,6 +5,7 @@
 
 import { db } from "@/lib/db";
 import { runCheck } from "@/lib/checker";
+import { purgeExpiredCheckResults } from "@/lib/data-retention";
 import {
   currentCheckSlot,
   isCheckDue,
@@ -17,6 +18,7 @@ export type CronTickSummary = {
   succeeded: number;
   failed: number;
   skipped: number;
+  retentionDeleted: number;
 };
 
 async function claimCheckSlot(checkId: string, slot: Date): Promise<boolean> {
@@ -34,6 +36,7 @@ async function claimCheckSlot(checkId: string, slot: Date): Promise<boolean> {
 
 export async function runCronTick(): Promise<CronTickSummary> {
   const now = new Date();
+  const retention = await purgeExpiredCheckResults(now);
 
   await db.maintenance.updateMany({
     where: { status: "SCHEDULED", scheduledStart: { lte: now } },
@@ -107,5 +110,6 @@ export async function runCronTick(): Promise<CronTickSummary> {
     succeeded,
     failed,
     skipped,
+    retentionDeleted: retention.deleted,
   };
 }

@@ -23,7 +23,7 @@ spec:
                 - /bin/sh
                 - -c
                 - >-
-                  curl -fsS -X POST
+                  curl -fsS -X GET
                   -H "Authorization: Bearer $CRON_SECRET"
                   http://{{ include "ghostwatch.fullname" . }}:{{ .Values.service.port }}/api/cron/execute
               env:

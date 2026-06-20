@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { linkCheckToProjectChannels } from "@/lib/alert-rules";
+import { createCheckSchema } from "@/lib/check-schemas";
 import { normalizeFolder } from "@/lib/check-folders";
 import {
   RegionSelectionError,
@@ -39,16 +40,36 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userId = await requireSession();
-    const body = await request.json();
-    const {
-      name, url, method, headers, body: checkBody,
-      expectedStatus, timeout, interval, projectId, isPublic, regions,
-      folder, sortOrder,
-    } = body;
-
-    if (!name || !url || !projectId) {
-      return NextResponse.json({ error: "name, url, and projectId are required" }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const parsed = createCheckSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation failed", issues: parsed.error.issues },
+        { status: 400 },
+      );
+    }
+
+    const {
+      name,
+      url,
+      method,
+      headers,
+      body: checkBody,
+      expectedStatus,
+      timeout,
+      interval,
+      projectId,
+      isPublic,
+      regions,
+      folder,
+      sortOrder,
+    } = parsed.data;
 
     await requireProjectAccess(projectId, userId, "EDITOR");
 
@@ -64,7 +85,8 @@ export async function POST(request: NextRequest) {
 
     const check = await db.check.create({
       data: {
-        name, url,
+        name,
+        url,
         method: method || "GET",
         headers: headers || undefined,
         body: checkBody || undefined,
@@ -75,7 +97,7 @@ export async function POST(request: NextRequest) {
         isPublic: isPublic ?? true,
         regions: resolvedRegions,
         folder: normalizeFolder(folder),
-        sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
+        sortOrder: sortOrder ?? 0,
       },
     });
 

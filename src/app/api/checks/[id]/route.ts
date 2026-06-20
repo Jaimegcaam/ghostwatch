@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma/client";
+import { updateCheckSchema } from "@/lib/check-schemas";
 import { normalizeFolder } from "@/lib/check-folders";
 import {
   RegionSelectionError,
@@ -49,7 +51,20 @@ export async function PUT(
   try {
     const userId = await requireSession();
     const { id } = await params;
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = updateCheckSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation failed", issues: parsed.error.issues },
+        { status: 400 },
+      );
+    }
 
     const existing = await db.check.findUnique({
       where: { id },
@@ -61,10 +76,11 @@ export async function PUT(
 
     await requireProjectAccess(existing.projectId, userId, "EDITOR");
 
+    const data = parsed.data;
     let resolvedRegions: string[] | undefined;
-    if (body.regions !== undefined) {
+    if (data.regions !== undefined) {
       try {
-        resolvedRegions = await resolveMonitorRegions(body.regions);
+        resolvedRegions = await resolveMonitorRegions(data.regions);
       } catch (error) {
         if (error instanceof RegionSelectionError) {
           return NextResponse.json({ error: error.message }, { status: 400 });
@@ -76,21 +92,24 @@ export async function PUT(
     const check = await db.check.update({
       where: { id },
       data: {
-        ...(body.name !== undefined && { name: body.name }),
-        ...(body.url !== undefined && { url: body.url }),
-        ...(body.method !== undefined && { method: body.method }),
-        ...(body.headers !== undefined && { headers: body.headers }),
-        ...(body.body !== undefined && { body: body.body }),
-        ...(body.expectedStatus !== undefined && { expectedStatus: body.expectedStatus }),
-        ...(body.timeout !== undefined && { timeout: body.timeout }),
-        ...(body.interval !== undefined && { interval: body.interval }),
-        ...(body.enabled !== undefined && { enabled: body.enabled }),
-        ...(body.isPublic !== undefined && { isPublic: body.isPublic }),
-        ...(resolvedRegions !== undefined && { regions: resolvedRegions }),
-        ...(body.folder !== undefined && {
-          folder: normalizeFolder(body.folder),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.url !== undefined && { url: data.url }),
+        ...(data.method !== undefined && { method: data.method }),
+        ...(data.headers !== undefined && {
+          headers:
+            data.headers === null ? Prisma.DbNull : data.headers,
         }),
-        ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
+        ...(data.body !== undefined && { body: data.body }),
+        ...(data.expectedStatus !== undefined && { expectedStatus: data.expectedStatus }),
+        ...(data.timeout !== undefined && { timeout: data.timeout }),
+        ...(data.interval !== undefined && { interval: data.interval }),
+        ...(data.enabled !== undefined && { enabled: data.enabled }),
+        ...(data.isPublic !== undefined && { isPublic: data.isPublic }),
+        ...(resolvedRegions !== undefined && { regions: resolvedRegions }),
+        ...(data.folder !== undefined && {
+          folder: normalizeFolder(data.folder),
+        }),
+        ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
       },
     });
 

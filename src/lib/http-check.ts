@@ -3,6 +3,8 @@
  * and by regional probe API routes (Vercel Edge).
  */
 
+import { validateMonitorUrl } from "@/lib/url-security";
+
 export interface HttpCheckInput {
   url: string;
   method: string;
@@ -22,6 +24,16 @@ export interface HttpCheckResult {
 export async function performHttpCheck(
   input: HttpCheckInput,
 ): Promise<HttpCheckResult> {
+  const urlValidation = validateMonitorUrl(input.url);
+  if (!urlValidation.ok) {
+    return {
+      status: null,
+      responseTime: 0,
+      success: false,
+      error: urlValidation.error,
+    };
+  }
+
   const headers: Record<string, string> = input.headers
     ? (input.headers as Record<string, string>)
     : {};
@@ -31,7 +43,7 @@ export async function performHttpCheck(
   const start = performance.now();
 
   try {
-    const response = await fetch(input.url, {
+    const response = await fetch(urlValidation.url.toString(), {
       method: input.method,
       headers,
       body:

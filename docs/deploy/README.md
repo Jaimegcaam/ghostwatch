@@ -13,5 +13,6 @@ Pick the guide that matches how you want to run Ghostwatch.
 | [Kubernetes Helm](kubernetes-helm.md) | Production on Kubernetes with Helm |
 | [Kubernetes YAML](kubernetes-manifests.md) | Kubernetes without Helm |
 | [Kubernetes multi-region](kubernetes-multi-region.md) | Hub on K8s + workers elsewhere |
+| [PostgreSQL backups](backups.md) | Backup and restore before upgrades |
 
 **Environment variables:** [Configuration reference](../CONFIGURATION.md)

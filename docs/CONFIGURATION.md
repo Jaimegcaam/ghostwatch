@@ -66,6 +66,21 @@ Guides: [Docker multi-region](deploy/docker-multi-region.md) · [Kubernetes mult
 
 ---
 
+## Data retention
+
+Check results are stored for every probe run. To prevent unbounded database growth, GhostWatch purges old rows automatically.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `CHECK_RESULT_RETENTION_DAYS` | `90` | Delete `CheckResult` rows older than this many days. Set `0` to disable. |
+| `ALLOW_PRIVATE_MONITOR_URLS` | unset | Set `true` only in local dev to allow monitors targeting `localhost` or private IPs. |
+
+Retention runs once per hour (top of each UTC hour) during the scheduled cron tick.
+
+Backups: [PostgreSQL backup guide](deploy/backups.md)
+
+---
+
 ## Email (optional)
 
 Without these, the app works — but invitations and email alerts are disabled.
