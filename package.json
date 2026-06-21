@@ -67,7 +67,7 @@
     "dotenv": "^17.4.1",
     "lucide-react": "^1.7.0",
     "nanoid": "^3.3.11",
-    "next": "16.2.2",
+    "next": "16.2.9",
     "next-auth": "^5.0.0-beta.30",
     "pg": "^8.20.0",
     "prisma": "^7.6.0",
@@ -80,7 +80,13 @@
   },
   "overrides": {
     "uuid": "^11.1.0",
-    "protobufjs": "^7.4.0"
+    "protobufjs": "^7.4.0",
+    "next": {
+      "postcss": "8.5.15"
+    },
+    "@opentelemetry/otlp-transformer": {
+      "protobufjs": "8.6.4"
+    }
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -88,9 +94,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.2",
+    "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }
 }
+
