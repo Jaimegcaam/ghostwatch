@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { validateAuthEmail } from "@/lib/auth-email";
 import { db } from "@/lib/db";
-import { requireSession, requireTeamRole, TeamAuthError } from "@/lib/team-auth";
 import { sendTeamInvitationEmail } from "@/lib/email";
+import { requireSession, requireTeamRole, TeamAuthError } from "@/lib/team-auth";
 import type { TeamRole } from "@/generated/prisma/client";
 
 const VALID_ROLES: TeamRole[] = ["ADMIN", "EDITOR", "VIEWER"];
@@ -52,7 +53,12 @@ export async function POST(
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const validated = await validateAuthEmail(email);
+    if (!validated.ok) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
+    }
+
+    const normalizedEmail = validated.email;
 
     const existingMember = await db.teamMember.findFirst({
       where: {

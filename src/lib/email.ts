@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logEvent } from "@/lib/logger";
 
 const APP_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
@@ -35,6 +36,11 @@ export async function sendTransactionalEmail(
     : payload.to;
   const resend = getResendClient();
   if (!resend) {
+    logEvent("info", "email.skipped", {
+      to: recipients,
+      subject: payload.subject,
+      reason: "no_resend_api_key",
+    });
     console.log("──────────────────────────────────────");
     console.log("EMAIL (no RESEND_API_KEY configured):");
     console.log(`  To: ${recipients}`);
@@ -45,7 +51,7 @@ export async function sendTransactionalEmail(
   }
 
   const from = getFromEmail();
-  console.log(`[Email] Sending to ${recipients}: "${payload.subject}" (from: ${from})`);
+  logEvent("info", "email.send", { to: recipients, subject: payload.subject, from });
 
   try {
     const { data, error } = await resend.emails.send({
@@ -56,11 +62,11 @@ export async function sendTransactionalEmail(
     });
 
     if (error) {
-      console.error("[Email] Resend error:", error.message);
+      logEvent("error", "email.failed", { to: recipients, error: error.message });
       return { ok: false, error: error.message };
     }
 
-    console.log("[Email] Sent successfully, id:", data?.id);
+    logEvent("info", "email.sent", { to: recipients, id: data?.id });
     return { ok: true, id: data?.id };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send email";

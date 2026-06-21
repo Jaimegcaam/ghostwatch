@@ -2,6 +2,23 @@
 
 All notable changes to GhostWatch are documented here.
 
+## [0.3.0] - 2026-06-19
+
+### Added
+- Real email validation on register, login, invitations, and password reset
+- Blocks placeholder addresses (`test@…`), disposable providers, and domains without MX/A records
+- Rate limiting on auth endpoints (register, forgot password, reset, verify, resend)
+- Email verification enforcement when Resend is configured
+- Resend verification endpoint and `/verify-pending` page
+- Structured JSON logging for auth events
+- Extended `/api/health` with version, email, and scheduler status
+- Docker image publish workflow to GHCR
+- Unit tests for auth email rules, rate limiting, and alerting helpers
+
+### Changed
+- Password minimum length aligned to 8 characters across register and reset flows
+- Register flow no longer auto-signs in when email verification is required
+
 ## [0.2.0] - 2026-06-19
 
 ### Added

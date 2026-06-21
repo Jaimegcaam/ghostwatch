@@ -61,6 +61,13 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GITHUB_ID: ${GITHUB_ID:-}
       GITHUB_SECRET: ${GITHUB_SECRET:-}
+
+      # --- Production hardening (0.2+) ---------------------------------------
+      CHECK_RESULT_RETENTION_DAYS: ${CHECK_RESULT_RETENTION_DAYS:-90}
+      SKIP_EMAIL_MX_CHECK: ${SKIP_EMAIL_MX_CHECK:-false}
+      REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-}
+      ALLOW_PRIVATE_MONITOR_URLS: ${ALLOW_PRIVATE_MONITOR_URLS:-false}
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-true}
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:

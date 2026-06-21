@@ -17,5 +17,5 @@ export const config = {
     github: "https://github.com/jaimegcaam/ghostwatch",
   },
   license: "MIT",
-  version: "0.2.0",
+  version: "0.3.0",
 } as const;

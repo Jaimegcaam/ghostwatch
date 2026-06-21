@@ -81,6 +81,24 @@ Backups: [PostgreSQL backup guide](deploy/backups.md)
 
 ---
 
+## Auth & email validation
+
+GhostWatch validates that registration and invitation emails look like real, deliverable addresses.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `REQUIRE_EMAIL_VERIFICATION` | auto | Force verified email before dashboard access. Defaults to on when `RESEND_API_KEY` is set. |
+| `SKIP_EMAIL_MX_CHECK` | unset | Set `true` in local dev if DNS lookups are unavailable. Format/disposable checks still apply. |
+
+**What is blocked:**
+- Placeholder local parts such as `test@`, `fake@`, `demo@`
+- Disposable email providers (Mailinator, Yopmail, etc.)
+- Domains that cannot receive mail (no MX or A records)
+
+**Verification flow:** when email is configured, new users must click the link sent to their inbox before accessing the dashboard. Unverified users can resend from `/verify-pending`.
+
+---
+
 ## Email (optional)
 
 Without these, the app works — but invitations and email alerts are disabled.

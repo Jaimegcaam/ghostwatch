@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { requiresEmailVerification } from "@/lib/auth-email";
 import { db } from "@/lib/db";
 
 const userInclude = {
@@ -57,6 +58,10 @@ export async function requireDashboardUser() {
 
   if (!user) {
     redirect("/api/auth/signout?callbackUrl=/");
+  }
+
+  if (requiresEmailVerification() && !user.emailVerified) {
+    redirect("/verify-pending");
   }
 
   return user;

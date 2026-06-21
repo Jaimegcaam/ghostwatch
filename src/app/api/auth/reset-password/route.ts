@@ -1,29 +1,36 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { authPasswordField } from "@/lib/auth-email";
 import { db } from "@/lib/db";
+import { logEvent } from "@/lib/logger";
+import { enforceAuthRateLimit } from "@/lib/auth-rate-limit";
+
+const resetSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: authPasswordField,
+});
 
 export async function POST(request: Request) {
-  let body: { token?: string; password?: string };
+  const ipLimit = enforceAuthRateLimit(request, "reset", 15);
+  if (ipLimit) return ipLimit;
+
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { token, password } = body;
-  if (!token || !password) {
+  const parsed = resetSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Token and password are required" },
-      { status: 400 }
+      { error: "Validation failed", issues: parsed.error.issues },
+      { status: 400 },
     );
   }
 
-  if (password.length < 6) {
-    return NextResponse.json(
-      { error: "Password must be at least 6 characters" },
-      { status: 400 }
-    );
-  }
+  const { token, password } = parsed.data;
 
   const resetToken = await db.passwordResetToken.findUnique({
     where: { token },
@@ -44,6 +51,7 @@ export async function POST(request: Request) {
   });
 
   await db.passwordResetToken.delete({ where: { id: resetToken.id } });
+  logEvent("info", "auth.password_reset.completed");
 
   return NextResponse.json({ ok: true });
 }

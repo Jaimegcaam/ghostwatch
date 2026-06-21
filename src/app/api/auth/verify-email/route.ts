@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logEvent } from "@/lib/logger";
+import { enforceAuthRateLimit } from "@/lib/auth-rate-limit";
 
 export async function POST(request: Request) {
+  const ipLimit = enforceAuthRateLimit(request, "verify-email", 20);
+  if (ipLimit) return ipLimit;
+
   let body: { token?: string };
   try {
     body = await request.json();
@@ -40,5 +45,6 @@ export async function POST(request: Request) {
     },
   });
 
+  logEvent("info", "auth.verification.completed");
   return NextResponse.json({ ok: true });
 }

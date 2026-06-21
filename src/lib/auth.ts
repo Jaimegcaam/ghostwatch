@@ -8,7 +8,12 @@ import {
   isGitHubOAuthEnabled,
   isGoogleOAuthEnabled,
 } from "@/lib/auth-providers";
+import {
+  requiresEmailVerification,
+  validateEmailFormat,
+} from "@/lib/auth-email";
 import { db } from "@/lib/db";
+import { logEvent } from "@/lib/logger";
 import { canRegister, canSignInWithCredentials } from "@/lib/self-hosted";
 
 const providers: Provider[] = [];
@@ -46,14 +51,31 @@ providers.push(
           return null;
         }
 
-        const user = await db.user.findUnique({ where: { email } });
+        const user = await db.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            hashedPassword: true,
+            emailVerified: true,
+          },
+        });
         if (!user?.hashedPassword) return null;
 
         const isValid = await bcrypt.compare(
           credentials.password as string,
           user.hashedPassword
         );
-        if (!isValid) return null;
+        if (!isValid) {
+          logEvent("warn", "auth.login.failed");
+          return null;
+        }
+
+        if (requiresEmailVerification() && !user.emailVerified) {
+          logEvent("warn", "auth.login.unverified", { userId: user.id });
+          return null;
+        }
 
         return { id: user.id, name: user.name, email: user.email };
       },
@@ -73,6 +95,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const email = (profile?.email || user.email)?.toLowerCase().trim();
       if (!email) return false;
+
+      const emailValidation = validateEmailFormat(email);
+      if (!emailValidation.ok) {
+        logEvent("warn", "auth.oauth.invalid_email");
+        return false;
+      }
 
       let dbUser = await db.user.findUnique({ where: { email } });
 

@@ -2,8 +2,20 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { z } from "zod";
+import {
+  authEmailField,
+  authPasswordField,
+  normalizeAuthEmail,
+  requiresEmailVerification,
+  validateAuthEmail,
+} from "@/lib/auth-email";
 import { db } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
+import { logEvent } from "@/lib/logger";
+import {
+  enforceAuthEmailRateLimit,
+  enforceAuthRateLimit,
+} from "@/lib/auth-rate-limit";
 import {
   canRegister,
   isSelfHosted,
@@ -12,8 +24,8 @@ import {
 
 const registerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: authEmailField,
+  password: authPasswordField,
 });
 
 function slugFromName(name: string): string {
@@ -69,6 +81,12 @@ async function allocateUniqueSlug(
 }
 
 export async function POST(request: Request) {
+  const ipLimit = enforceAuthRateLimit(request, "register:ip", 30);
+  if (ipLimit) {
+    logEvent("warn", "auth.register.rate_limited", { scope: "ip" });
+    return ipLimit;
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -84,12 +102,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, password } = parsed.data;
-  const emailNorm = email.toLowerCase().trim();
+  const { name, password } = parsed.data;
+  const emailNorm = normalizeAuthEmail(parsed.data.email);
 
-  // Enforce instance registration policy (self-hosted: closed by default)
+  const emailLimit = enforceAuthEmailRateLimit(emailNorm, "register", 5);
+  if (emailLimit) {
+    logEvent("warn", "auth.register.rate_limited", { scope: "email" });
+    return emailLimit;
+  }
+
+  const deliverability = await validateAuthEmail(emailNorm);
+  if (!deliverability.ok) {
+    return NextResponse.json(
+      { error: deliverability.error, issues: [{ path: ["email"], message: deliverability.error }] },
+      { status: 400 },
+    );
+  }
+
   const decision = await canRegister(emailNorm);
   if (!decision.allowed) {
+    logEvent("warn", "auth.register.denied", { code: decision.code });
     return NextResponse.json(
       {
         error: publicAuthMessage(decision),
@@ -104,7 +136,6 @@ export async function POST(request: Request) {
     const teamSlug = await allocateUniqueSlug(name, "team");
     const projectSlug = await allocateUniqueSlug(name, "project");
 
-    // On a self-hosted instance, the first user is auto-verified (owner bootstrap)
     const autoVerify =
       isSelfHosted() &&
       (decision.reason === "bootstrap" ||
@@ -119,11 +150,10 @@ export async function POST(request: Request) {
         hashedPassword,
         emailVerified: autoVerify ? new Date() : null,
       },
-      select: { id: true, name: true, email: true, createdAt: true, updatedAt: true },
+      select: { id: true, name: true, email: true, createdAt: true, updatedAt: true, emailVerified: true },
     });
 
     if (decision.reason === "invitation") {
-      // Invited users join the team they were invited to — no personal team.
       const invitations = await db.teamInvitation.findMany({
         where: {
           email: emailNorm,
@@ -148,7 +178,6 @@ export async function POST(request: Request) {
         ]);
       }
     } else {
-      // First user (bootstrap) or owner re-registration: create their own team.
       await db.team.create({
         data: {
           name: `${name}'s Team`,
@@ -163,9 +192,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // On a self-hosted instance the owner doesn't need to verify by email —
-    // skip the verification step if we already auto-verified them above.
+    let requiresVerification = false;
     if (!autoVerify) {
+      requiresVerification = requiresEmailVerification();
       const token = crypto.randomBytes(32).toString("hex");
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
       await db.verificationToken.create({
@@ -174,7 +203,18 @@ export async function POST(request: Request) {
       await sendVerificationEmail(emailNorm, token);
     }
 
-    return NextResponse.json(user, { status: 201 });
+    logEvent("info", "auth.register.success", {
+      userId: user.id,
+      requiresVerification,
+    });
+
+    return NextResponse.json(
+      {
+        ...user,
+        requiresVerification,
+      },
+      { status: 201 },
+    );
   } catch (error: unknown) {
     if (isPrismaUniqueViolation(error)) {
       const target = metaTarget(error);
@@ -195,7 +235,9 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
-    console.error("Register error:", error);
+    logEvent("error", "auth.register.failed", {
+      error: error instanceof Error ? error.message : "unknown",
+    });
     return NextResponse.json(
       { error: "Registration failed" },
       { status: 500 }

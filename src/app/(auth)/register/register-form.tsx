@@ -10,6 +10,7 @@ type InstanceInfo = {
   selfHosted: boolean;
   openRegistration: boolean;
   bootstrap: boolean;
+  requiresEmailVerification?: boolean;
   googleOAuth?: boolean;
   githubOAuth?: boolean;
 };
@@ -56,6 +57,7 @@ export function RegisterForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [instance, setInstance] = useState<InstanceInfo | null>(null);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export function RegisterForm() {
     const errs: FieldErrors = {};
     if (!name.trim()) errs.name = "Name is required";
     if (!email.trim()) errs.email = "Email is required";
-    if (password.length < 6) errs.password = "Min 6 characters";
+    if (password.length < 8) errs.password = "Min 8 characters";
     if (password !== confirmPassword) errs.confirmPassword = "Passwords don't match";
     if (Object.keys(errs).length > 0) { setFieldErrors(errs); return; }
 
@@ -85,7 +87,7 @@ export function RegisterForm() {
         body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), password }),
       });
 
-      let data: { error?: string; issues?: RegisterIssue[] } = {};
+      let data: { error?: string; issues?: RegisterIssue[]; requiresVerification?: boolean } = {};
       try { data = await res.json(); } catch { /* empty */ }
 
       if (!res.ok) {
@@ -104,6 +106,12 @@ export function RegisterForm() {
       }
 
       setSuccess(true);
+      setNeedsVerification(Boolean(data.requiresVerification));
+
+      if (data.requiresVerification) {
+        return;
+      }
+
       const signResult = await signIn("credentials", { email: email.trim().toLowerCase(), password, redirect: false });
       if (signResult?.ok) {
         setTimeout(() => { router.push("/dashboard"); router.refresh(); }, 2000);
@@ -127,7 +135,16 @@ export function RegisterForm() {
         <p className="mt-2 text-sm text-gw-fg-muted">
           We sent a verification link to <strong>{email}</strong>. Please verify your email to complete setup.
         </p>
-        <p className="mt-4 text-xs text-gw-fg-subtle">Redirecting to dashboard...</p>
+        <p className="mt-4 text-xs text-gw-fg-subtle">
+          {needsVerification
+            ? "Sign in after verifying your email."
+            : "Redirecting to dashboard..."}
+        </p>
+        {needsVerification ? (
+          <Link href="/" className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            Go to sign in
+          </Link>
+        ) : null}
       </div>
     );
   }
@@ -202,7 +219,7 @@ export function RegisterForm() {
         </div>
         <div>
           <label htmlFor="reg-password" className="mb-1.5 block text-sm font-medium text-gw-fg-muted">Password</label>
-          <input id="reg-password" type="password" autoComplete="new-password" placeholder="Min 6 characters" value={password} onChange={(ev) => setPassword(ev.target.value)} className={inputClass} disabled={loading} />
+          <input id="reg-password" type="password" autoComplete="new-password" placeholder="Min 8 characters" value={password} onChange={(ev) => setPassword(ev.target.value)} className={inputClass} disabled={loading} />
           {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
         </div>
         <div>

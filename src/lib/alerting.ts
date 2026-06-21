@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { emailRecipients } from "@/lib/alert-recipients";
 import {
   buildAlertEmailHtml,
   isEmailConfigured,
@@ -28,15 +29,6 @@ interface ChannelConfig {
   emails?: string[];
   url?: string;
   [key: string]: unknown;
-}
-
-/** Recipients for an email channel, supporting the legacy single-email format. */
-export function emailRecipients(config: ChannelConfig): string[] {
-  const list = Array.isArray(config.emails) ? config.emails : [];
-  const merged = [...list, ...(config.email ? [config.email] : [])]
-    .map((e) => e.trim())
-    .filter(Boolean);
-  return [...new Set(merged)];
 }
 
 async function sendSlack(config: ChannelConfig, message: string, metadata: AlertMetadata) {

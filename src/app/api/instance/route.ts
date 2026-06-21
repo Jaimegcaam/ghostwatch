@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isEmailConfigured } from "@/lib/email";
+import { requiresEmailVerification } from "@/lib/auth-email";
 import {
   getHealthyProbeRegions,
   getInstalledProbeRegions,
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
     defaultRegion: getDefaultRegion(),
     singleRegion: isSingleRegion(),
     emailConfigured: isEmailConfigured(),
+    requiresEmailVerification: requiresEmailVerification(),
     oauthEnabled: isOAuthEnabled(),
     googleOAuth: isGoogleOAuthEnabled(),
     githubOAuth: isGitHubOAuthEnabled(),
