@@ -306,11 +306,20 @@ async function handleSuccess(check: Check) {
     where: { checkId: check.id, status: "ONGOING" },
   });
 
+  const hadNotifiedIncident =
+    check.lastAlertedAt != null &&
+    ongoingIncidents.some((incident) => check.lastAlertedAt! >= incident.startedAt);
+
   for (const incident of ongoingIncidents) {
     await db.incident.update({
       where: { id: incident.id },
       data: { status: "RESOLVED", resolvedAt: new Date() },
     });
+  }
+
+  // Skip recovery notifications if this failure run never generated an alert.
+  if (!hadNotifiedIncident) {
+    return;
   }
 
   // Don't send recovery if in cooldown (unstable/flapping)
