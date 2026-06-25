@@ -244,18 +244,10 @@ export async function runCheck(
     },
   });
 
-  // If a deployment is in progress we treat failures as transient and don't
-  // update check state or send alerts. Toggle with `DEPLOYMENT_IN_PROGRESS=true`.
-  if (!result.success && process.env.DEPLOYMENT_IN_PROGRESS === "true") {
-    console.log(
-      `[CHECK] Deployment in progress — skipping failure handling for check "${check.name}" (${check.id})`,
-    );
+  if (result.success) {
+    await handleSuccess(check);
   } else {
-    if (result.success) {
-      await handleSuccess(check);
-    } else {
-      await handleFailure(check, result);
-    }
+    await handleFailure(check, result);
   }
 
   if (options.touchLastChecked !== false) {
@@ -314,6 +306,10 @@ async function handleSuccess(check: Check) {
     where: { checkId: check.id, status: "ONGOING" },
   });
 
+  const hadNotifiedIncident =
+    check.lastAlertedAt != null &&
+    ongoingIncidents.some((incident) => check.lastAlertedAt! >= incident.startedAt);
+
   for (const incident of ongoingIncidents) {
     await db.incident.update({
       where: { id: incident.id },
@@ -321,32 +317,9 @@ async function handleSuccess(check: Check) {
     });
   }
 
-  // Helper: determine whether any delivered alerts exist for this check
-  // since the incident started. Some alert sends may fail; only send a
-  // recovery if at least one "down" alert was actually delivered.
-  async function hasDeliveredAlertSince(startedAt: Date): Promise<boolean> {
-    // Fetch alerts for this project's channels since the incident start
-    const alerts = await db.alert.findMany({
-      where: {
-        sentAt: { gte: startedAt },
-        alertChannel: { projectId: check.projectId },
-      },
-      include: { alertChannel: true },
-      orderBy: { sentAt: "asc" },
-    });
-
-    for (const a of alerts) {
-      try {
-        const meta = a.metadata as any;
-        if (meta && meta.checkId === check.id && meta.delivered) {
-          return true;
-        }
-      } catch (_) {
-        // ignore malformed metadata
-      }
-    }
-
-    return false;
+  // Skip recovery notifications if this failure run never generated an alert.
+  if (!hadNotifiedIncident) {
+    return;
   }
 
   // Don't send recovery if in cooldown (unstable/flapping)
@@ -372,32 +345,16 @@ async function handleSuccess(check: Check) {
       include: { alertChannel: true },
     });
     const message = `Check "${check.name}" recovered but is unstable (${newFlapCount} state changes recently). Alerts paused for ${cooldownMinutes} minutes.`;
-
-    // Only send recovery notifications if a prior alert was actually delivered
-    let shouldNotify = false;
-    for (const incident of ongoingIncidents) {
-      if (await hasDeliveredAlertSince(incident.startedAt)) {
-        shouldNotify = true;
-        break;
-      }
-    }
-
-    if (shouldNotify) {
-      await Promise.allSettled(
-        rules.map((rule) =>
-          sendRecoveryToChannel(rule.alertChannelId, message, {
-            checkId: check.id,
-            checkName: check.name,
-            url: check.url,
-            recovered: true,
-          }),
-        ),
-      );
-    } else {
-      console.log(
-        `[ALERT] Skipping recovery notifications for "${check.name}" — no delivered alerts found for recent incidents`,
-      );
-    }
+    await Promise.allSettled(
+      rules.map((rule) =>
+        sendRecoveryToChannel(rule.alertChannelId, message, {
+          checkId: check.id,
+          checkName: check.name,
+          url: check.url,
+          recovered: true,
+        }),
+      ),
+    );
     return;
   }
 
@@ -414,24 +371,11 @@ async function handleSuccess(check: Check) {
     url: check.url,
   };
 
-  // Only send recovery notifications if at least one delivered "down" alert
-  let shouldNotify = false;
-  for (const incident of ongoingIncidents) {
-    if (await hasDeliveredAlertSince(incident.startedAt)) {
-      shouldNotify = true;
-      break;
-    }
-  }
-
-  if (shouldNotify) {
-    await Promise.allSettled(
-      rules.map((rule) => sendRecoveryToChannel(rule.alertChannelId, message, metadata)),
-    );
-  } else {
-    console.log(
-      `[ALERT] Skipping recovery notifications for "${check.name}" — no delivered alerts found for recent incidents`,
-    );
-  }
+  await Promise.allSettled(
+    rules.map((rule) =>
+      sendRecoveryToChannel(rule.alertChannelId, message, metadata),
+    ),
+  );
 
   // Reset flap count after a clean recovery
   await db.check.update({
